@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CML Dashboard — NDA GROUP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   VARIABLES & RESET
+============================================================ */
+:root {
+  --bg:#0a0d14; --bg2:#0f1320; --bg3:#161c2d;
+  --card:#1a2035; --card2:#1f2740; --border:#2a3450;
+  --accent:#3b82f6; --accent2:#6366f1;
+  --green:#10b981; --yellow:#f59e0b; --red:#ef4444; --orange:#f97316;
+  --text:#e2e8f0; --text2:#94a3b8; --text3:#64748b; --gold:#d4af37;
+  --font-disp:'Plus Jakarta Sans',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'JetBrains Mono',monospace;
+  --r:12px; --r2:8px; --shadow:0 4px 24px rgba(0,0,0,0.4);
+  --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ============================================================
+   LOGIN
+============================================================ */
+#login-screen{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;z-index:1000;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%,rgba(59,130,246,0.12),transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%,rgba(99,102,241,0.08),transparent);
+  padding:16px;
+}
+.login-box{
+  width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:40px 32px;
+  box-shadow:0 8px 64px rgba(0,0,0,0.6),0 0 0 1px rgba(59,130,246,0.1);
+  animation:fadeSlideUp 0.5s ease;
+}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+.login-logo-icon{
+  width:44px;height:44px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-disp);font-weight:800;font-size:18px;color:#fff;
+}
+.login-logo-text{font-family:var(--font-disp);font-weight:700;font-size:18px;}
+.login-logo-sub{font-size:11px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;}
+.login-title{font-family:var(--font-disp);font-size:24px;font-weight:700;margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:28px;}
+.form-group{margin-bottom:16px;}
+.form-label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:7px;display:block;}
+.form-input{
+  width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r2);color:var(--text);font-family:var(--font-body);font-size:14px;
+  outline:none;transition:border-color 0.2s,box-shadow 0.2s;-webkit-appearance:none;
+}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,0.15);}
+.btn-login{
+  width:100%;padding:13px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:var(--r2);color:#fff;font-family:var(--font-disp);
+  font-size:15px;font-weight:600;cursor:pointer;transition:opacity 0.2s,transform 0.15s;margin-top:6px;
+}
+.btn-login:hover{opacity:0.9;transform:translateY(-1px);}
+.btn-login:active{transform:translateY(0);}
+.btn-login:disabled{opacity:0.6;cursor:not-allowed;}
+#login-error{
+  background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);
+  border-radius:var(--r2);padding:10px 14px;font-size:13px;color:#fca5a5;
+  margin-top:10px;display:none;
+}
+#login-lockout{
+  background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);
+  border-radius:var(--r2);padding:12px 14px;font-size:13px;color:#f87171;
+  margin-top:10px;display:none;text-align:center;
+}
+.login-attempts-bar{
+  height:3px;background:var(--bg3);border-radius:99px;margin-top:12px;overflow:hidden;
+}
+.login-attempts-fill{height:100%;border-radius:99px;background:var(--red);transition:width 0.3s;}
+.login-footer{margin-top:20px;text-align:center;font-size:11px;color:var(--text3);}
+.strength-bar{height:4px;background:var(--bg3);border-radius:99px;margin-top:6px;overflow:hidden;}
+.strength-fill{height:100%;border-radius:99px;transition:width 0.3s,background 0.3s;}
+
+/* ============================================================
+   APP SHELL
+============================================================ */
+#app{display:none;min-height:100vh;}
+
+/* ============================================================
+   MOBILE TOPBAR (hamburger)
+============================================================ */
+.mobile-topbar{
+  display:none;position:fixed;top:0;left:0;right:0;height:56px;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  align-items:center;justify-content:space-between;padding:0 16px;
+  z-index:200;
+}
+.hamburger{
+  width:36px;height:36px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:5px;
+  cursor:pointer;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg3);flex-shrink:0;
+}
+.hamburger span{display:block;width:18px;height:2px;background:var(--text2);border-radius:2px;transition:all 0.3s;}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.mobile-logo{font-family:var(--font-disp);font-weight:700;font-size:15px;}
+.mobile-user-btn{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;cursor:pointer;flex-shrink:0;
+}
+
+/* OVERLAY for mobile sidebar */
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:149;
+}
+.sidebar-overlay.show{display:block;}
+
+/* ============================================================
+   SIDEBAR
+============================================================ */
+.sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:150;
+  transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.sidebar-header{padding:20px 16px;border-bottom:1px solid var(--border);}
+.sidebar-logo{display:flex;align-items:center;gap:10px;}
+.sidebar-logo-icon{
+  width:34px;height:34px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-disp);font-weight:800;font-size:13px;color:#fff;
+}
+.sidebar-logo-text{font-family:var(--font-disp);font-weight:700;font-size:14px;}
+.sidebar-logo-sub{font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;}
+.sidebar-badge{
+  margin:10px 16px 0;padding:5px 10px;
+  background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);
+  border-radius:6px;font-size:10px;font-weight:600;color:var(--accent);
+  letter-spacing:0.05em;text-transform:uppercase;
+}
+.sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto;}
+.nav-section-title{
+  font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.1em;
+  text-transform:uppercase;padding:8px 8px 5px;margin-top:6px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;
+  border-radius:var(--r2);cursor:pointer;font-size:13px;font-weight:500;
+  color:var(--text2);transition:all 0.15s;margin-bottom:2px;user-select:none;
+}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:rgba(59,130,246,0.15);color:var(--accent);}
+.nav-item .nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.nav-badge{
+  margin-left:auto;font-size:10px;font-weight:700;padding:2px 6px;
+  border-radius:99px;background:rgba(239,68,68,0.2);color:#fca5a5;
+}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);}
+.user-card{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:var(--bg3);border-radius:var(--r2);cursor:pointer;transition:background 0.15s;
+}
+.user-card:hover{background:var(--card);}
+.user-avatar{
+  width:30px;height:30px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;
+}
+.user-name{font-size:12px;font-weight:600;}
+.user-role{font-size:10px;color:var(--text3);}
+.user-actions{margin-left:auto;font-size:13px;color:var(--text3);}
+
+/* ============================================================
+   MAIN CONTENT
+============================================================ */
+.main{margin-left:var(--sidebar-w);min-height:100vh;background:var(--bg);}
+.topbar{
+  position:sticky;top:0;background:rgba(10,13,20,0.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;z-index:50;gap:12px;
+}
+.topbar-left{min-width:0;flex:1;}
+.topbar-title{font-family:var(--font-disp);font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar-sub{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.topbar-date{font-family:var(--font-mono);font-size:11px;color:var(--text3);padding:5px 10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);}
+.btn-upload{
+  display:flex;align-items:center;gap:6px;padding:7px 14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:var(--r2);color:#fff;font-family:var(--font-body);
+  font-size:12px;font-weight:600;cursor:pointer;transition:opacity 0.2s;white-space:nowrap;
+}
+.btn-upload:hover{opacity:0.85;}
+
+/* ============================================================
+   PAGES
+============================================================ */
+.page{display:none;padding:24px;animation:pageFade 0.3s ease;}
+.page.active{display:block;}
+@keyframes pageFade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ============================================================
+   GRIDS — fully responsive
+============================================================ */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px;}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px;}
+
+/* ============================================================
+   KPI CARDS
+============================================================ */
+.kpi-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;
+}
+.kpi-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.kpi-card.green::before{background:linear-gradient(90deg,var(--green),#34d399);}
+.kpi-card.yellow::before{background:linear-gradient(90deg,var(--yellow),#fcd34d);}
+.kpi-card.red::before{background:linear-gradient(90deg,var(--red),#f87171);}
+.kpi-card.gold::before{background:linear-gradient(90deg,var(--gold),#fde68a);}
+.kpi-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+.kpi-value{font-family:var(--font-disp);font-size:26px;font-weight:800;line-height:1;margin-bottom:6px;}
+.kpi-sub{font-size:11px;color:var(--text2);}
+.kpi-trend{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;margin-top:7px;}
+.kpi-trend.up{background:rgba(16,185,129,0.15);color:#34d399;}
+.kpi-trend.down{background:rgba(239,68,68,0.15);color:#f87171;}
+.kpi-trend.neutral{background:rgba(148,163,184,0.15);color:var(--text2);}
+.kpi-trend.yellow{background:rgba(245,158,11,0.15);color:#fcd34d;}
+
+/* ============================================================
+   CARDS
+============================================================ */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.card-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:var(--font-disp);font-size:14px;font-weight:700;}
+.card-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.card-body{padding:16px 20px;}
+.chart-wrap{position:relative;height:220px;}
+.chart-wrap-lg{position:relative;height:280px;}
+
+/* ============================================================
+   TABLES — scrollable on mobile
+============================================================ */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px;}
+.data-table th{text-align:left;padding:9px 14px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg3);}
+.data-table td{padding:10px 14px;border-bottom:1px solid rgba(42,52,80,0.5);color:var(--text2);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(59,130,246,0.04);color:var(--text);}
+.data-table .amount{font-family:var(--font-mono);font-size:11px;}
+
+/* ============================================================
+   BADGES
+============================================================ */
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;}
+.badge.red{background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.25);}
+.badge.orange{background:rgba(249,115,22,0.15);color:#fdba74;border:1px solid rgba(249,115,22,0.25);}
+.badge.yellow{background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.25);}
+.badge.green{background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.25);}
+.badge.blue{background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.25);}
+.badge.gray{background:rgba(100,116,139,0.15);color:var(--text3);border:1px solid rgba(100,116,139,0.2);}
+
+/* ============================================================
+   PROGRESS
+============================================================ */
+.progress-wrap{margin-bottom:14px;}
+.progress-header{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;}
+.progress-bar{height:5px;background:var(--bg3);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;transition:width 1s ease;}
+.progress-fill.blue{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.progress-fill.green{background:linear-gradient(90deg,var(--green),#34d399);}
+.progress-fill.yellow{background:linear-gradient(90deg,var(--yellow),#fcd34d);}
+.progress-fill.red{background:linear-gradient(90deg,var(--red),#f87171);}
+
+/* ============================================================
+   ALERTS
+============================================================ */
+.alert{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:var(--r2);margin-bottom:10px;border-left:4px solid;}
+.alert.red{background:rgba(239,68,68,0.08);border-color:var(--red);}
+.alert.yellow{background:rgba(245,158,11,0.08);border-color:var(--yellow);}
+.alert.green{background:rgba(16,185,129,0.08);border-color:var(--green);}
+.alert.blue{background:rgba(59,130,246,0.08);border-color:var(--accent);}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+.alert-text{font-size:12px;line-height:1.5;}
+.alert-title{font-weight:700;margin-bottom:2px;font-size:13px;}
+
+/* ============================================================
+   ACTION ITEMS
+============================================================ */
+.action-item{
+  display:flex;align-items:flex-start;gap:12px;padding:12px 14px;
+  border-radius:var(--r2);background:var(--bg3);margin-bottom:7px;
+  border:1px solid var(--border);transition:border-color 0.2s;cursor:pointer;
+}
+.action-item:hover{border-color:var(--accent);}
+.action-item.done{opacity:0.5;}
+.action-checkbox{
+  width:17px;height:17px;flex-shrink:0;border:2px solid var(--border);
+  border-radius:4px;display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;margin-top:2px;
+}
+.action-item.done .action-checkbox{background:var(--green);border-color:var(--green);color:#fff;font-size:10px;}
+.action-text{font-size:13px;font-weight:500;}
+.action-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.action-right{margin-left:auto;flex-shrink:0;}
+
+/* ============================================================
+   FEBI LINES
+============================================================ */
+.febi-line{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(42,52,80,0.5);gap:8px;flex-wrap:wrap;}
+.febi-line:last-child{border-bottom:none;}
+.febi-line-name{font-size:12px;font-weight:500;flex:1;min-width:140px;}
+.febi-line-trim{font-family:var(--font-mono);font-size:11px;color:var(--text2);}
+.febi-line-annual{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--green);}
+
+/* ============================================================
+   UPLOAD
+============================================================ */
+.upload-zone{
+  border:2px dashed var(--border);border-radius:var(--r);padding:32px 20px;
+  text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;
+}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(59,130,246,0.05);}
+.upload-icon{font-size:32px;margin-bottom:10px;}
+.upload-title{font-size:14px;font-weight:600;margin-bottom:5px;}
+.upload-sub{font-size:12px;color:var(--text3);}
+.uploaded-files{margin-top:16px;}
+.uploaded-file{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--bg3);border-radius:var(--r2);margin-bottom:7px;font-size:12px;border:1px solid var(--border);}
+.file-icon{font-size:18px;flex-shrink:0;}
+.file-name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.file-size{font-size:11px;color:var(--text3);flex-shrink:0;}
+
+/* ============================================================
+   USER MANAGEMENT
+============================================================ */
+.user-row{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg3);border-radius:var(--r2);border:1px solid var(--border);margin-bottom:7px;flex-wrap:wrap;}
+.user-row-avatar{width:34px;height:34px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+.user-row-name{font-size:13px;font-weight:600;}
+.user-row-email{font-size:11px;color:var(--text3);}
+.user-row-role{margin-left:auto;}
+
+/* ============================================================
+   BUTTONS
+============================================================ */
+.btn-sm{padding:6px 13px;border-radius:var(--r2);border:1px solid var(--border);background:var(--card2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+.btn-sm.danger:hover{border-color:var(--red);color:var(--red);}
+.btn-primary{padding:10px 18px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:var(--r2);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.2s;}
+.btn-primary:hover{opacity:0.85;}
+
+/* ============================================================
+   MODAL
+============================================================ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:460px;box-shadow:var(--shadow);animation:fadeSlideUp 0.3s ease;}
+.modal-title{font-family:var(--font-disp);font-size:18px;font-weight:700;margin-bottom:18px;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
+
+/* ============================================================
+   SECTION HEADERS
+============================================================ */
+.section-header{margin-bottom:18px;}
+.section-title{font-family:var(--font-disp);font-size:20px;font-weight:700;}
+.section-sub{font-size:12px;color:var(--text3);margin-top:4px;}
+
+/* ============================================================
+   UTILS
+============================================================ */
+.mt16{margin-top:16px;} .mt24{margin-top:24px;}
+.fw600{font-weight:600;}
+.text-green{color:var(--green);} .text-red{color:var(--red);}
+.text-yellow{color:var(--yellow);} .text-accent{color:var(--accent);}
+.mono{font-family:var(--font-mono);}
+.flex-between{display:flex;justify-content:space-between;align-items:center;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+============================================================ */
+@media(max-width:1100px){
+  .grid-4{grid-template-columns:repeat(2,1fr);}
+  .grid-3{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:768px){
+  /* Show mobile topbar, hide desktop topbar elements */
+  .mobile-topbar{display:flex;}
+  .sidebar{transform:translateX(-100%);top:0;}
+  .sidebar.mobile-open{transform:translateX(0);}
+  .main{margin-left:0;padding-top:56px;}
+  .topbar{padding:10px 16px;top:56px;}
+  .topbar-date{display:none;}
+  .topbar .btn-upload span{display:none;}
+  .page{padding:16px;}
+  .grid-4{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .grid-3{grid-template-columns:1fr;gap:10px;}
+  .grid-2,.grid-2-1{grid-template-columns:1fr;gap:12px;}
+  .kpi-value{font-size:22px;}
+  .modal-box{padding:22px 18px;}
+  .card-body{padding:14px 16px;}
+  .card-header{padding:14px 16px 10px;}
+  .chart-wrap{height:180px;}
+  .chart-wrap-lg{height:220px;}
+  .topbar-title{font-size:15px;}
+}
+@media(max-width:480px){
+  .grid-4{grid-template-columns:1fr 1fr;}
+  .kpi-value{font-size:20px;}
+  .login-box{padding:28px 20px;}
+  .febi-line{flex-direction:column;align-items:flex-start;gap:4px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">CML</div>
+      <div>
+        <div class="login-logo-text">NDA GROUP</div>
+        <div class="login-logo-sub">Financial Dashboard</div>
+      </div>
+    </div>
+    <div class="login-title">Connexion</div>
+    <div class="login-sub">Accès réservé — Usage strictement confidentiel</div>
+    <div class="form-group">
+      <label class="form-label">Identifiant</label>
+      <input id="inp-user" class="form-input" type="text" placeholder="Votre identifiant" autocomplete="username" autocapitalize="none">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot de passe</label>
+      <input id="inp-pass" class="form-input" type="password" placeholder="••••••••••" autocomplete="current-password">
+    </div>
+    <div class="login-attempts-bar"><div class="login-attempts-fill" id="attempts-fill" style="width:0%"></div></div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Se connecter →</button>
+    <div id="login-error">Identifiant ou mot de passe incorrect.</div>
+    <div id="login-lockout"></div>
+    <div class="login-footer">NDA GROUP SA — Centre Medical Louvierois SA<br>Données confidentielles — Ne pas divulguer</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Mobile topbar -->
+  <div class="mobile-topbar">
+    <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="mobile-logo">CML Dashboard</div>
+    <div class="mobile-user-btn" id="mobile-avatar" onclick="showPage('users')">AA</div>
+  </div>
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">CML</div>
+        <div>
+          <div class="sidebar-logo-text">NDA GROUP</div>
+          <div class="sidebar-logo-sub">Dashboard</div>
+        </div>
+      </div>
+      <div class="sidebar-badge">Exercice 2026</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Vue générale</div>
+      <div class="nav-item active" onclick="navTo('overview')"><span class="nav-icon">📊</span> Tableau de bord</div>
+      <div class="nav-section-title">Financier</div>
+      <div class="nav-item" onclick="navTo('financials')"><span class="nav-icon">💰</span> Compte de résultats</div>
+      <div class="nav-item" onclick="navTo('balance')"><span class="nav-icon">⚖️</span> Bilan</div>
+      <div class="nav-item" onclick="navTo('projections')"><span class="nav-icon">📈</span> Projections 2026</div>
+      <div class="nav-section-title">Opérationnel</div>
+      <div class="nav-item" onclick="navTo('febi')"><span class="nav-icon">🏥</span> Subsides FEBI</div>
+      <div class="nav-item" onclick="navTo('suppliers')"><span class="nav-icon">🏢</span> Fournisseurs</div>
+      <div class="nav-item" onclick="navTo('clients')"><span class="nav-icon">👥</span> Clients & Créances</div>
+      <div class="nav-section-title">Juridique & Risques</div>
+      <div class="nav-item" onclick="navTo('transfer')"><span class="nav-icon">⚖️</span> Prix de transfert<span class="nav-badge">!</span></div>
+      <div class="nav-item" onclick="navTo('risks')"><span class="nav-icon">🔴</span> Passifs & Risques<span class="nav-badge">3</span></div>
+      <div class="nav-section-title">Gestion</div>
+      <div class="nav-item" onclick="navTo('actions')"><span class="nav-icon">✅</span> Plan d'actions</div>
+      <div class="nav-item" onclick="navTo('upload')"><span class="nav-icon">📁</span> Documents</div>
+      <div class="nav-item" onclick="navTo('users')"><span class="nav-icon">👤</span> Utilisateurs</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card" onclick="navTo('users')">
+        <div class="user-avatar" id="sidebar-avatar">AA</div>
+        <div>
+          <div class="user-name" id="sidebar-username">Admin_Anthony</div>
+          <div class="user-role" id="sidebar-role">Administrateur</div>
+        </div>
+        <div class="user-actions">⚙️</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="page-title">Tableau de bord</div>
+        <div class="topbar-sub" id="page-sub">Vue générale — CML SA | Données au 28/02/2026</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date" id="current-date">—</div>
+        <button class="btn-upload" onclick="navTo('upload')">⬆ <span>Importer</span></button>
+        <button class="btn-sm" onclick="doLogout()">⏻</button>
+      </div>
+    </div>
+
+    <!-- PAGE: OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="section-header">
+        <div class="section-title">Vue d'ensemble</div>
+        <div class="section-sub">Données consolidées jan–fév 2026 • Bilan interne au 28/02/2026</div>
+      </div>
+      <div class="alert red"><span class="alert-icon">🔴</span><div class="alert-text"><div class="alert-title">Saisie-arrêt UNILEX active</div>~40 000 € prélevés + 5 000 €/mois. Montant résiduel inconnu. Action juridique urgente.</div></div>
+      <div class="alert yellow"><span class="alert-icon">⚠️</span><div class="alert-text"><div class="alert-title">Prix de transfert NDA — documentation à valider</div>Ratio redevance/CA à 12,1% — au-dessus du benchmark sectoriel CP330.</div></div>
+      <div class="alert green"><span class="alert-icon">✅</span><div class="alert-text"><div class="alert-title">Subsides FEBI Q1 2026 comptabilisés</div>92 591 € en produits acquis. Encaissement physique à suivre.</div></div>
+      <div class="grid-4">
+        <div class="kpi-card green"><div class="kpi-label">💶 CA Cumulé (jan–fév)</div><div class="kpi-value text-green">504 085 €</div><div class="kpi-sub">INAMI — toutes mutualités</div><div class="kpi-trend up">▲ +7% vs 2025 annuel</div></div>
+        <div class="kpi-card"><div class="kpi-label">📊 Total Produits</div><div class="kpi-value">599 357 €</div><div class="kpi-sub">CA + FEBI + autres</div><div class="kpi-trend up">▲ FEBI intégrés</div></div>
+        <div class="kpi-card green"><div class="kpi-label">📈 Résultat Net</div><div class="kpi-value text-green">96 470 €</div><div class="kpi-sub">Bénéfice jan–fév 2026</div><div class="kpi-trend up">▲ vs 4 278 € sans FEBI</div></div>
+        <div class="kpi-card"><div class="kpi-label">💧 Trésorerie</div><div class="kpi-value text-yellow">25 757 €</div><div class="kpi-sub">Liquidités disponibles</div><div class="kpi-trend down">▼ FEBI non encaissé</div></div>
+      </div>
+      <div class="grid-4">
+        <div class="kpi-card"><div class="kpi-label">Marge Exploitation</div><div class="kpi-value text-green">16,1%</div><div class="kpi-sub">Avec subsides FEBI</div><div class="kpi-trend neutral">~0,7% hors FEBI</div></div>
+        <div class="kpi-card"><div class="kpi-label">💊 Subsides FEBI / an</div><div class="kpi-value">553 152 €</div><div class="kpi-sub">Base 75% des droits</div><div class="kpi-trend yellow">+184k€ potentiel</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">⚠️ Passifs critiques</div><div class="kpi-value text-yellow">49 034 €</div><div class="kpi-sub">Impôts 2022–2023</div><div class="kpi-trend down">+ UNILEX ~40k€</div></div>
+        <div class="kpi-card"><div class="kpi-label">Liquidité générale</div><div class="kpi-value text-green">1,16x</div><div class="kpi-sub">Actifs circ / Dettes CT</div><div class="kpi-trend up">▲ Au-dessus de 1</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div><div class="card-title">CA par mutualité</div><div class="card-sub">Jan–Fév 2026</div></div></div><div class="card-body"><div class="chart-wrap"><canvas id="chartMutual"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><div><div class="card-title">Structure des charges</div><div class="card-sub">Annualisé</div></div></div><div class="card-body"><div class="chart-wrap"><canvas id="chartCharges"></canvas></div></div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Ratios financiers clés</div></div>
+        <div class="card-body">
+          <div class="progress-wrap"><div class="progress-header"><span>Marge exploitation</span><span class="text-green fw600">19,1%</span></div><div class="progress-bar"><div class="progress-fill green" style="width:19.1%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-header"><span>Liquidité générale (cible &gt;1)</span><span class="text-green fw600">1,16x</span></div><div class="progress-bar"><div class="progress-fill blue" style="width:58%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-header"><span>Droits FEBI utilisés (cible 100%)</span><span class="text-yellow fw600">75%</span></div><div class="progress-bar"><div class="progress-fill yellow" style="width:75%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-header"><span>Couverture dettes fiscales / trésorerie</span><span class="text-red fw600">53%</span></div><div class="progress-bar"><div class="progress-fill red" style="width:53%"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: FINANCIALS -->
+    <div class="page" id="page-financials">
+      <div class="section-header"><div class="section-title">Compte de résultats</div><div class="section-sub">Exercice 2026 — Jan–Fév cumulé & projections annuelles</div></div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Produits</div></div><div class="card-body"><div class="table-scroll"><table class="data-table"><thead><tr><th>Poste</th><th>Cumul fév</th><th>Annualisé</th></tr></thead><tbody>
+          <tr><td>CA INAMI (cpte 70)</td><td class="amount text-green">504 085 €</td><td class="amount">3 024 510 €</td></tr>
+          <tr><td>Subsides FEBI ✅</td><td class="amount text-green">92 192 €</td><td class="amount">553 152 €</td></tr>
+          <tr><td>ATN + exonérations</td><td class="amount">3 080 €</td><td class="amount">18 480 €</td></tr>
+          <tr style="font-weight:600;color:var(--text)"><td>Total produits</td><td class="amount text-accent">599 357 €</td><td class="amount text-accent">3 595 662 €</td></tr>
+        </tbody></table></div></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Charges</div></div><div class="card-body"><div class="table-scroll"><table class="data-table"><thead><tr><th>Poste</th><th>Cumul fév</th><th>Annualisé</th></tr></thead><tbody>
+          <tr><td>Honoraires NDA</td><td class="amount text-red">-90 000 €</td><td class="amount">-435 600 €</td></tr>
+          <tr><td>Personnel intérimaire</td><td class="amount text-red">-102 008 €</td><td class="amount">-612 048 €</td></tr>
+          <tr><td>Rémunérations (62)</td><td class="amount text-red">-258 955 €</td><td class="amount">-1 553 730 €</td></tr>
+          <tr><td>Services & biens div.</td><td class="amount text-red">-239 447 €</td><td class="amount">-1 436 682 €</td></tr>
+          <tr><td>Amortissements</td><td class="amount">-2 326 €</td><td class="amount">-13 956 €</td></tr>
+          <tr style="font-weight:600;color:var(--text)"><td>Total charges</td><td class="amount text-red">-502 887 €</td><td class="amount text-red">-3 017 000 €</td></tr>
+        </tbody></table></div></div></div>
+      </div>
+      <div class="grid-3">
+        <div class="kpi-card green"><div class="kpi-label">Bénéfice exploitation</div><div class="kpi-value text-green">96 488 €</div><div class="kpi-sub">Jan–Fév 2026</div></div>
+        <div class="kpi-card"><div class="kpi-label">Charges financières</div><div class="kpi-value">-18 €</div><div class="kpi-sub">Frais bancaires</div></div>
+        <div class="kpi-card green"><div class="kpi-label">Résultat net</div><div class="kpi-value text-green">96 470 €</div><div class="kpi-sub">Projeté annuel : ~579 000 €</div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Évolution mensuelle CA vs Charges</div></div><div class="card-body"><div class="chart-wrap-lg"><canvas id="chartMonthly"></canvas></div></div></div>
+    </div>
+
+    <!-- PAGE: BALANCE -->
+    <div class="page" id="page-balance">
+      <div class="section-header"><div class="section-title">Bilan simplifié</div><div class="section-sub">Au 28/02/2026 — Source : THG Bruxelles 19/03/2026</div></div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">ACTIF — 522 851 €</div></div><div class="card-body"><div class="table-scroll"><table class="data-table"><thead><tr><th>Poste</th><th>Montant</th><th>%</th></tr></thead><tbody>
+          <tr><td>Actifs immobilisés</td><td class="amount">74 405 €</td><td>14,2%</td></tr>
+          <tr><td>Créances commerciales</td><td class="amount">276 963 €</td><td>53,0%</td></tr>
+          <tr><td>Autres créances (C/C)</td><td class="amount">53 134 €</td><td>10,2%</td></tr>
+          <tr><td>Trésorerie</td><td class="amount text-yellow">25 757 €</td><td>4,9%</td></tr>
+          <tr><td>Produits acquis FEBI ✅</td><td class="amount text-green">92 591 €</td><td>17,7%</td></tr>
+          <tr style="font-weight:600;color:var(--text)"><td>Total actif</td><td class="amount text-accent">522 851 €</td><td>100%</td></tr>
+        </tbody></table></div></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">PASSIF — 522 851 €</div></div><div class="card-body"><div class="table-scroll"><table class="data-table"><thead><tr><th>Poste</th><th>Montant</th><th>Note</th></tr></thead><tbody>
+          <tr><td>Capitaux propres (bruts)</td><td class="amount text-red">-7 364 €</td><td><span class="badge gray">Retraité</span></td></tr>
+          <tr><td>Réserve immunisée PRJ</td><td class="amount text-green">+339 164 €</td><td></td></tr>
+          <tr><td>Perte reportée</td><td class="amount text-red">-622 979 €</td><td><span class="badge red">Hist.</span></td></tr>
+          <tr><td>Résultat provisoire</td><td class="amount text-green">+207 463 €</td><td></td></tr>
+          <tr><td>Dettes commerciales</td><td class="amount">141 967 €</td><td></td></tr>
+          <tr><td>Dettes fiscales/sociales</td><td class="amount text-yellow">182 933 €</td><td><span class="badge yellow">⚠</span></td></tr>
+          <tr><td>Autres dettes</td><td class="amount">208 995 €</td><td></td></tr>
+          <tr style="font-weight:600;color:var(--text)"><td>Total passif</td><td class="amount text-accent">522 851 €</td><td></td></tr>
+        </tbody></table></div></div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Structure du bilan</div></div><div class="card-body"><div class="chart-wrap-lg"><canvas id="chartBalance"></canvas></div></div></div>
+    </div>
+
+    <!-- PAGE: PROJECTIONS -->
+    <div class="page" id="page-projections">
+      <div class="section-header"><div class="section-title">Projections 2026</div><div class="section-sub">Scénarios annuels — Extrapolation jan–fév 2026</div></div>
+      <div class="grid-4">
+        <div class="kpi-card"><div class="kpi-label">Pessimiste</div><div class="kpi-value">+651k €</div><div class="kpi-sub">CA jan×12 + FEBI</div><div class="kpi-trend up">Résultat positif</div></div>
+        <div class="kpi-card green"><div class="kpi-label">Base</div><div class="kpi-value text-green">+558k €</div><div class="kpi-sub">Moy. jan-fév ×12 + FEBI</div><div class="kpi-trend up">Référence</div></div>
+        <div class="kpi-card"><div class="kpi-label">Optimiste</div><div class="kpi-value">+930k €</div><div class="kpi-sub">CA +15% + FEBI</div><div class="kpi-trend up">CA ~3,48M€</div></div>
+        <div class="kpi-card gold"><div class="kpi-label">FEBI 100%</div><div class="kpi-value" style="color:var(--gold)">+742k €</div><div class="kpi-sub">Si audit positif</div><div class="kpi-trend up">+184k€ FEBI</div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Comparaison des scénarios</div></div><div class="card-body"><div class="chart-wrap-lg"><canvas id="chartScenarios"></canvas></div></div></div>
+      <div class="card mt24"><div class="card-header"><div class="card-title">Impact bonus variable NDA</div><div class="card-sub">3% du CA excédant 3 000 000 €</div></div>
+        <div class="card-body">
+          <div class="alert blue"><span class="alert-icon">ℹ️</span><div class="alert-text"><div class="alert-title">Question juridique ouverte</div>CA INAMI projeté ~3 024 510 € (sous le seuil). Si les subsides FEBI sont inclus, le CA total atteint ~3 595 662 €, déclenchant un bonus potentiel de <strong>~17 870 €</strong>.</div></div>
+          <div class="chart-wrap"><canvas id="chartBonus"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: FEBI -->
+    <div class="page" id="page-febi">
+      <div class="section-header"><div class="section-title">Subsides FEBI / UCARE</div><div class="section-sub">CP330 — Soins infirmiers à domicile — Taux actuel : 75%</div></div>
+      <div class="grid-3">
+        <div class="kpi-card green"><div class="kpi-label">✅ Comptabilisé (jan-fév)</div><div class="kpi-value text-green">92 591 €</div><div class="kpi-sub">Produits acquis (cpte 491)</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">⏳ Encaissement attendu</div><div class="kpi-value text-yellow">92 591 €</div><div class="kpi-sub">Non encore en trésorerie</div></div>
+        <div class="kpi-card"><div class="kpi-label">Annuel (75%)</div><div class="kpi-value">553 152 €</div><div class="kpi-sub">+184k€ potentiel à 100%</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Détail par ligne</div><div class="card-sub">Taux 75% appliqué</div></div>
+          <div class="card-body">
+            <div class="febi-line"><div class="febi-line-name">Forfait soins infirmiers à domicile</div><div class="febi-line-trim">15 101 €/trim</div><div class="febi-line-annual">60 402 €/an</div></div>
+            <div class="febi-line"><div class="febi-line-name">Subsides IFIC (classification)</div><div class="febi-line-trim">26 250 €/trim</div><div class="febi-line-annual">105 000 €/an</div></div>
+            <div class="febi-line"><div class="febi-line-name">Emploi Maribel I (19h/sem.)</div><div class="febi-line-trim">3 563 €/trim</div><div class="febi-line-annual">14 250 €/an</div></div>
+            <div class="febi-line"><div class="febi-line-name">Min accord 2011 — Équipe Mobile</div><div class="febi-line-trim">40 500 €/trim</div><div class="febi-line-annual">162 000 €/an</div></div>
+            <div class="febi-line"><div class="febi-line-name">Fonds Maribel Social + attractivité</div><div class="febi-line-trim">52 875 €/trim</div><div class="febi-line-annual">211 500 €/an</div></div>
+            <div class="febi-line" style="border-top:2px solid var(--border);margin-top:4px;padding-top:12px"><div class="febi-line-name fw600">TOTAL</div><div class="febi-line-trim fw600">138 288 €/trim</div><div class="febi-line-annual fw600">553 152 €/an</div></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><div class="card-title">75% vs 100% — Opportunité</div></div>
+          <div class="card-body">
+            <div class="chart-wrap"><canvas id="chartFebi"></canvas></div>
+            <div class="alert yellow mt16"><span class="alert-icon">💡</span><div class="alert-text"><div class="alert-title">Potentiel inexploité : +184 000 €/an</div>Un audit d'éligibilité CP330 est recommandé dans les 30 jours.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: SUPPLIERS -->
+    <div class="page" id="page-suppliers">
+      <div class="section-header"><div class="section-title">Fournisseurs</div><div class="section-sub">Postes ouverts au 19/03/2026 — Source : balance THG Bruxelles</div></div>
+      <div class="grid-3">
+        <div class="kpi-card"><div class="kpi-label">Solde net fournisseurs</div><div class="kpi-value">54 056 €</div><div class="kpi-sub">Créditeur net</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">Dettes commerciales bilan</div><div class="kpi-value text-yellow">141 967 €</div><div class="kpi-sub">Cptes 440 + 444</div></div>
+        <div class="kpi-card red"><div class="kpi-label">Postes en retard</div><div class="kpi-value text-red">4</div><div class="kpi-sub">DKV, Corilus, Ferrari, Thyssen</div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Balance fournisseurs au 19/03/2026</div></div>
+        <div class="table-scroll"><table class="data-table">
+          <thead><tr><th>Fournisseur</th><th>Solde</th><th>Type</th><th>Évolution</th><th>Statut</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Partena HR</strong></td><td class="amount text-yellow">56 593 € C</td><td>Secrétariat social</td><td class="text-green">↓ vs 93 427 €</td><td><span class="badge yellow">À apurer</span></td></tr>
+            <tr><td><strong>DNM Invest</strong></td><td class="amount">13 251 € C</td><td>Ancien bailleur</td><td>Stable</td><td><span class="badge gray">Suivi</span></td></tr>
+            <tr><td><strong>THG Bruxelles</strong></td><td class="amount">8 829 € C</td><td>Comptable</td><td>Stable</td><td><span class="badge blue">Plan</span></td></tr>
+            <tr><td><strong>Soft 33 Corilus</strong></td><td class="amount text-yellow">6 807 € C</td><td>Logiciel médical</td><td>Nouveau</td><td><span class="badge red">À régulariser</span></td></tr>
+            <tr><td><strong>AXA Assurances</strong></td><td class="amount text-orange">9 065 € D</td><td>Assurance AT</td><td>Nouveau</td><td><span class="badge orange">À clarifier</span></td></tr>
+            <tr><td><strong>Axus</strong></td><td class="amount">7 867 € D</td><td>Véhicules (11)</td><td>Stable</td><td><span class="badge gray">Suivi</span></td></tr>
+            <tr><td><strong>Express Medical</strong></td><td class="amount text-green">6 982 € D</td><td>Intérim médical</td><td class="text-green">↓↓ vs 24 103 €</td><td><span class="badge green">✅ Amélioré</span></td></tr>
+            <tr><td><strong>DKV</strong></td><td class="amount text-red">4 046 € D</td><td>Assurance hospit.</td><td class="text-red">↑ vs 3 296 €</td><td><span class="badge red">4 mois retard</span></td></tr>
+            <tr><td><strong>Actief Interim</strong></td><td class="amount">1 709 € D</td><td>Intérim Ciney</td><td>Nouveau</td><td><span class="badge gray">Suivi</span></td></tr>
+            <tr><td><strong>Amazon</strong></td><td class="amount">1 462 € D</td><td>Achats divers</td><td>Nouveau</td><td><span class="badge yellow">À documenter</span></td></tr>
+            <tr><td><strong>Ferrari Club Belgio</strong></td><td class="amount text-yellow">625 € D</td><td>Event-Dinner</td><td>Stable</td><td><span class="badge yellow">Justificatif !</span></td></tr>
+            <tr><td><strong>Randstad</strong></td><td class="amount text-green">68 € D</td><td>Intérim</td><td class="text-green">✅ 19 932 régularisé</td><td><span class="badge green">Quasi soldé</span></td></tr>
+            <tr><td><strong>UNILEX</strong></td><td class="amount text-red">~40 000 € +</td><td>Saisie-arrêt</td><td>Active</td><td><span class="badge red">🔴 URGENT</span></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- PAGE: CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="section-header"><div class="section-title">Clients & Créances</div><div class="section-sub">Balance agée au 13/03/2026</div></div>
+      <div class="grid-3">
+        <div class="kpi-card green"><div class="kpi-label">Créances commerciales</div><div class="kpi-value text-green">276 963 €</div><div class="kpi-sub">Dont INAMI (pmt 3-5j)</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">Balance agée clients</div><div class="kpi-value text-yellow">48 903 €</div><div class="kpi-sub">Dont 7 813 € échus</div></div>
+        <div class="kpi-card"><div class="kpi-label">Risque crédit global</div><div class="kpi-value text-green">Faible</div><div class="kpi-sub">INAMI = ~90% du CA</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Balance agée clients</div></div><div class="card-body"><div class="chart-wrap"><canvas id="chartClients"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Détail créances ouvertes</div></div>
+          <div class="table-scroll"><table class="data-table"><thead><tr><th>Client</th><th>Solde</th><th>Ancienneté</th><th>Action</th></tr></thead><tbody>
+            <tr><td>Epicura Centre Hosp.</td><td class="amount text-yellow">19 407 €</td><td><span class="badge yellow">31-60j</span></td><td>Suivi renforcé</td></tr>
+            <tr><td>Mutualités (résidus)</td><td class="amount text-green">17 869 €</td><td><span class="badge green">Normal</span></td><td>RAS</td></tr>
+            <tr><td>IMS Laboratoire</td><td class="amount text-orange">4 888 €</td><td><span class="badge orange">&gt;30j</span></td><td>Relancer</td></tr>
+            <tr><td>RCAM Commission EU</td><td class="amount">4 815 €</td><td><span class="badge blue">À échoir</span></td><td>Nouveau client</td></tr>
+            <tr><td>Ariane Chemins ASBL</td><td class="amount text-red">2 925 €</td><td><span class="badge red">61-90j</span></td><td>🔴 Urgence</td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: TRANSFER PRICING -->
+    <div class="page" id="page-transfer">
+      <div class="section-header"><div class="section-title">Prix de transfert NDA-CML</div><div class="section-sub">Analyse des risques SPF Finances — Art. 185 CIR 92 — Note juridique 18/03/2026</div></div>
+      <div class="alert red"><span class="alert-icon">🔴</span><div class="alert-text"><div class="alert-title">Risque global élevé — Score 63%</div>Ratio redevance/CA à 12,1% (benchmark sectoriel &lt;8%). Documentation non encore validée indépendamment.</div></div>
+      <div class="grid-4">
+        <div class="kpi-card red"><div class="kpi-label">Risque global actuel</div><div class="kpi-value text-red">63%</div><div class="kpi-sub">CA 3,6M€ — Redevance 435k€</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">Risque seuil 5,2M€</div><div class="kpi-value text-yellow">57%</div><div class="kpi-sub">Ratio R/CA : 9,6%</div></div>
+        <div class="kpi-card"><div class="kpi-label">Ratio R/CA actuel</div><div class="kpi-value">12,1%</div><div class="kpi-sub">Benchmark : &lt;8%</div></div>
+        <div class="kpi-card"><div class="kpi-label">Redevance NDA</div><div class="kpi-value">435 600 €</div><div class="kpi-sub">/an — base Cost+10%</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Exposition par axe SPF</div><div class="card-sub">Actuel vs Seuil 5,2M€</div></div><div class="card-body"><div class="chart-wrap-lg"><canvas id="chartRisk"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Scénarios CA cibles</div></div>
+          <div class="table-scroll"><table class="data-table"><thead><tr><th>Scénario</th><th>CA</th><th>Ratio R/CA</th><th>Risque</th></tr></thead><tbody>
+            <tr><td>Situation actuelle</td><td class="amount">3,6M€</td><td class="text-red fw600">12,6%</td><td><span class="badge red">63% Élevé</span></td></tr>
+            <tr><td>Seuil 1 — Min défendable</td><td class="amount">5,2M€</td><td class="text-yellow fw600">9,6%</td><td><span class="badge yellow">57% Élevé</span></td></tr>
+            <tr><td>Seuil 2 — Acceptable</td><td class="amount">6,5M€</td><td class="text-yellow fw600">8,3%</td><td><span class="badge orange">54% Modéré</span></td></tr>
+            <tr><td>Seuil 3 — Confort total</td><td class="amount">8,0M€</td><td class="text-green fw600">7,3%</td><td><span class="badge green">52% Modéré</span></td></tr>
+            <tr><td>Option B — Révision 280k€</td><td class="amount">3,6M€</td><td class="text-yellow fw600">8,3%</td><td><span class="badge orange">54% Modéré</span></td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+      <div class="card mt16"><div class="card-header"><div class="card-title">Détail des 5 axes d'attaque SPF</div></div>
+        <div class="card-body">
+          <div class="progress-wrap"><div class="progress-header"><span><strong>Axe 4 — Défaut documentaire</strong> (Art. 321/1 CIR)</span><span class="text-red fw600">80%</span></div><div class="progress-bar"><div class="progress-fill red" style="width:80%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:3px">Local File + formulaire 275 MF + benchmark AMADEUS — Priorité absolue</div></div>
+          <div class="progress-wrap"><div class="progress-header"><span><strong>Axe 1 — Réalité des prestations</strong> (Art. 49 CIR)</span><span class="text-red fw600">70%</span></div><div class="progress-bar"><div class="progress-fill red" style="width:70%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:3px">Constituer registre des prestations + livrables datés IMMÉDIATEMENT</div></div>
+          <div class="progress-wrap"><div class="progress-header"><span><strong>Axe 5 — Abus de droit</strong> (Art. 344 §1 CIR)</span><span class="text-yellow fw600">59%</span></div><div class="progress-bar"><div class="progress-fill yellow" style="width:59%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:3px">Vérifier substance NDA GROUP SA au Luxembourg</div></div>
+          <div class="progress-wrap"><div class="progress-header"><span><strong>Axe 2 — Contestation du prix</strong> (Art. 185 §2 CIR)</span><span class="text-yellow fw600">55%</span></div><div class="progress-bar"><div class="progress-fill yellow" style="width:55%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:3px">Benchmark tiers requis — 30-60 jours</div></div>
+          <div class="progress-wrap"><div class="progress-header"><span><strong>Axe 3 — Distribution déguisée</strong> (Art. 26 CIR)</span><span class="text-yellow fw600">50%</span></div><div class="progress-bar"><div class="progress-fill yellow" style="width:50%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:3px">Risque précompte mobilier 30% si requalification</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: RISKS -->
+    <div class="page" id="page-risks">
+      <div class="section-header"><div class="section-title">Passifs & Risques</div><div class="section-sub">Passifs historiques et risques ouverts — Priorisation</div></div>
+      <div class="grid-2">
+        <div>
+          <div class="alert red"><span class="alert-icon">🔴</span><div class="alert-text"><div class="alert-title">Saisie-arrêt UNILEX — URGENT</div>~40 000 € + 5 000 €/mois depuis sep 2025. Montant résiduel inconnu. Mandater avocat immédiatement.</div></div>
+          <div class="alert red"><span class="alert-icon">🔴</span><div class="alert-text"><div class="alert-title">Impôts 2022-2023 — 49 034 €</div>Rev. 2022 : 24 604 € + Rev. 2023 : 24 430 €. Sans plan d'apurement, risque exécution forcée.</div></div>
+          <div class="alert yellow"><span class="alert-icon">⚠️</span><div class="alert-text"><div class="alert-title">C/C dirigeants — 54 127 € (Roger)</div>Convention de remboursement à formaliser pour éviter requalification fiscale.</div></div>
+          <div class="alert yellow"><span class="alert-icon">⚠️</span><div class="alert-text"><div class="alert-title">Perte reportée — 622 979 €</div>Héritée des exercices antérieurs. Plan pluriannuel d'apurement à formaliser.</div></div>
+        </div>
+        <div class="card"><div class="card-header"><div class="card-title">Répartition des passifs</div></div><div class="card-body"><div class="chart-wrap-lg"><canvas id="chartPassif"></canvas></div></div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Inventaire complet</div></div>
+        <div class="table-scroll"><table class="data-table"><thead><tr><th>Passif / Risque</th><th>Montant</th><th>Nature</th><th>Priorité</th></tr></thead><tbody>
+          <tr><td><strong>Saisie UNILEX</strong></td><td class="amount text-red">~40k€ + 5k/mois</td><td>Exécution forcée</td><td><span class="badge red">🔴 Urgent</span></td></tr>
+          <tr><td><strong>Impôts Rev. 2022</strong></td><td class="amount text-red">24 604 €</td><td>SPF Finances</td><td><span class="badge red">🔴 Urgent</span></td></tr>
+          <tr><td><strong>Impôts Rev. 2023</strong></td><td class="amount text-red">24 430 €</td><td>SPF Finances</td><td><span class="badge red">🔴 Urgent</span></td></tr>
+          <tr><td><strong>Précomptes retenus</strong></td><td class="amount text-yellow">37 069 €</td><td>Cpte 453000</td><td><span class="badge orange">🟠 Court terme</span></td></tr>
+          <tr><td><strong>ONSS</strong></td><td class="amount text-yellow">34 994 €</td><td>Cpte 454000</td><td><span class="badge orange">🟠 Court terme</span></td></tr>
+          <tr><td><strong>Avance PNS</strong></td><td class="amount">140 175 €</td><td>Cpte 484000</td><td><span class="badge blue">Plan pluriannuel</span></td></tr>
+          <tr><td><strong>Dettes procès Roger</strong></td><td class="amount">64 220 €</td><td>Cpte 489000</td><td><span class="badge blue">En cours</span></td></tr>
+          <tr><td><strong>Perte reportée</strong></td><td class="amount text-red">622 979 €</td><td>Historique</td><td><span class="badge blue">Plan pluriannuel</span></td></tr>
+          <tr><td><strong>C/C Roger</strong></td><td class="amount">54 127 €</td><td>Cpte 416003</td><td><span class="badge yellow">Convention requise</span></td></tr>
+        </tbody></table></div>
+      </div>
+    </div>
+
+    <!-- PAGE: ACTIONS -->
+    <div class="page" id="page-actions">
+      <div class="section-header"><div class="section-title">Plan d'actions</div><div class="section-sub">Cliquez sur une action pour la marquer comme réalisée</div></div>
+      <div class="grid-3">
+        <div class="kpi-card green"><div class="kpi-label">Actions réalisées</div><div class="kpi-value text-green">4</div></div>
+        <div class="kpi-card red"><div class="kpi-label">Actions urgentes (&lt;30j)</div><div class="kpi-value text-red">7</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">Court terme (30-90j)</div><div class="kpi-value text-yellow">6</div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">✅ Réalisé</div></div><div class="card-body">
+        <div class="action-item done" onclick="toggleAction(this)"><div class="action-checkbox">✓</div><div><div class="action-text">Déclarer Q1 2026 auprès du FEBI (138 288 €)</div><div class="action-meta">✅ FAIT — 18/03/2026</div></div></div>
+        <div class="action-item done" onclick="toggleAction(this)"><div class="action-checkbox">✓</div><div><div class="action-text">Régulariser comptablement les subsides jan-fév (92 192 €)</div><div class="action-meta">✅ FAIT — bilan 18/03/2026</div></div></div>
+        <div class="action-item done" onclick="toggleAction(this)"><div class="action-checkbox">✓</div><div><div class="action-text">Régulariser solde Randstad</div><div class="action-meta">✅ Quasi-soldé — 68 € résiduel</div></div></div>
+        <div class="action-item done" onclick="toggleAction(this)"><div class="action-checkbox">✓</div><div><div class="action-text">Réduire solde Express Medical Interim</div><div class="action-meta">✅ Ramené à 6 982 € vs 24 103 €</div></div></div>
+      </div></div>
+      <div class="card mt16"><div class="card-header"><div class="card-title">🔴 Actions immédiates (&lt;30 jours)</div></div><div class="card-body">
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Suivre l'encaissement physique FEBI</div><div class="action-meta">92 591 € en produits acquis — non encore en trésorerie</div></div><div class="action-right"><span class="badge red">Urgent</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Contacter SPF Finances — plan d'apurement 2022-2023</div><div class="action-meta">49 034 € — éviter exécution forcée type UNILEX</div></div><div class="action-right"><span class="badge red">Urgent</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Mandater avocat pour UNILEX</div><div class="action-meta">Identifier montant résiduel et négocier plan</div></div><div class="action-right"><span class="badge red">Urgent</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Constituer registre prestations NDA → CML</div><div class="action-meta">Livrables datés + feuilles de temps — Axe 1 PT</div></div><div class="action-right"><span class="badge red">PT Critique</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Vérifier substance NDA GROUP SA au Luxembourg</div><div class="action-meta">Personnel, locaux, décisions — Axe 5 abus de droit</div></div><div class="action-right"><span class="badge red">PT Critique</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Régulariser DKV — 4 mois de retard</div><div class="action-meta">4 046 € — déc 2025, jan, fév, mars 2026</div></div><div class="action-right"><span class="badge orange">Court terme</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Apurer Soft 33 Corilus (6 807 €)</div><div class="action-meta">Factures déc 2025 en souffrance</div></div><div class="action-right"><span class="badge orange">Court terme</span></div></div>
+      </div></div>
+      <div class="card mt16"><div class="card-header"><div class="card-title">🟡 Actions court terme (30-90 jours)</div></div><div class="card-body">
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Mandater conseil fiscal pour Local File + benchmark PT</div><div class="action-meta">Local File Art. 321/1 + étude AMADEUS / TP Catalyst</div></div><div class="action-right"><span class="badge yellow">30-60j</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Clarifier assiette bonus NDA (subsides FEBI inclus ?)</div><div class="action-meta">Impact potentiel : 17 870 € — clarification juridique</div></div><div class="action-right"><span class="badge yellow">30-60j</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Convention de remboursement C/C Roger (54 127 €)</div><div class="action-meta">Éviter requalification fiscale</div></div><div class="action-right"><span class="badge yellow">60j</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Audit éligibilité FEBI — passage 75% → 100%</div><div class="action-meta">+184 000 €/an de produits supplémentaires potentiels</div></div><div class="action-right"><span class="badge yellow">60j</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Révision transitoire redevance NDA (300-320k€ + true-up)</div><div class="action-meta">Réduction mécanique risque SPF</div></div><div class="action-right"><span class="badge yellow">60-90j</span></div></div>
+        <div class="action-item" onclick="toggleAction(this)"><div class="action-checkbox"></div><div><div class="action-text">Plan d'apurement Avance PNS (140 175 €)</div><div class="action-meta">Cpte 484000 — en baisse vs 160 175 € fin 2025</div></div><div class="action-right"><span class="badge blue">90j</span></div></div>
+      </div></div>
+    </div>
+
+    <!-- PAGE: UPLOAD -->
+    <div class="page" id="page-upload">
+      <div class="section-header"><div class="section-title">Documents & Imports</div><div class="section-sub">Uploadez vos fichiers pour mettre à jour les données</div></div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Importer un fichier</div><div class="card-sub">PDF, Excel, CSV, Word</div></div>
+          <div class="card-body">
+            <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
+              <div class="upload-icon">📁</div>
+              <div class="upload-title">Glissez-déposez ou appuyez</div>
+              <div class="upload-sub">PDF, XLSX, CSV, DOCX — max 50 MB</div>
+            </div>
+            <input type="file" id="file-input" style="display:none" multiple onchange="handleFileSelect(event)">
+            <div class="uploaded-files" id="uploaded-files"></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><div class="card-title">Documents référencés</div></div>
+          <div class="card-body">
+            <div class="uploaded-file"><div class="file-icon">📄</div><div class="file-name">BRIEFING_NDA-CML_V02.md</div><span class="badge green">Actif</span></div>
+            <div class="uploaded-file"><div class="file-icon">📊</div><div class="file-name">Bilan interne Fév 2026 (v3)</div><span class="badge green">Actif</span></div>
+            <div class="uploaded-file"><div class="file-icon">⚖️</div><div class="file-name">Note juridique prix de transfert</div><span class="badge green">Actif</span></div>
+            <div class="uploaded-file"><div class="file-icon">📈</div><div class="file-name">Analyse CA / prix de transfert</div><span class="badge green">Actif</span></div>
+            <div class="uploaded-file"><div class="file-icon">🏢</div><div class="file-name">Postes ouverts fournisseurs 19/03</div><span class="badge green">Actif</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: USERS -->
+    <div class="page" id="page-users">
+      <div class="section-header"><div class="section-title">Gestion des utilisateurs</div><div class="section-sub">Accès et permissions — <span id="users-count">1</span> utilisateur(s)</div></div>
+      <div class="flex-between mt16" style="margin-bottom:16px">
+        <div></div>
+        <button class="btn-primary" onclick="openAddUser()">+ Ajouter un utilisateur</button>
+      </div>
+      <div class="card"><div class="card-body" id="users-list"></div></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL: ADD USER -->
+<div class="modal-overlay" id="modal-adduser">
+  <div class="modal-box">
+    <div class="modal-title">Ajouter un utilisateur</div>
+    <div class="form-group">
+      <label class="form-label">Identifiant</label>
+      <input id="new-username" class="form-input" type="text" placeholder="ex: user_prenom" autocapitalize="none">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot de passe</label>
+      <input id="new-password" class="form-input" type="password" placeholder="Min. 8 caractères" oninput="checkStrength(this.value)">
+      <div class="strength-bar"><div class="strength-fill" id="strength-fill" style="width:0%"></div></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px" id="strength-label"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirmer le mot de passe</label>
+      <input id="new-password2" class="form-input" type="password" placeholder="Répétez le mot de passe">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rôle</label>
+      <select id="new-role" class="form-input">
+        <option value="Viewer">Viewer (lecture seule)</option>
+        <option value="Editor">Editor (lecture + upload)</option>
+        <option value="Admin">Admin (accès complet)</option>
+      </select>
+    </div>
+    <div id="add-user-error" style="color:#fca5a5;font-size:12px;display:none;margin-top:6px;padding:8px 12px;background:rgba(239,68,68,0.1);border-radius:6px;"></div>
+    <div class="modal-footer">
+      <button class="btn-sm" onclick="closeAddUser()">Annuler</button>
+      <button class="btn-primary" onclick="addUser()">Créer l'utilisateur</button>
+    </div>
+  </div>
+</div>
+
+<script>
+<script>
+/* ============================================================
+   CRYPTO — SHA-256 via Web Crypto API (built into all browsers)
+============================================================ */
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ============================================================
+   AUTH CONFIG
+============================================================ */
+const SALT         = 'NDA_CML_SALT_2026_secure';
+const USERS_KEY    = 'cml_users_v3';   // fresh key — no conflict with old versions
+const SESSION_KEY  = 'cml_session_v3';
+const LOCK_KEY     = 'cml_lock_v3';
+const MAX_ATTEMPTS = 5;
+const LOCK_MS      = 5 * 60 * 1000;   // 5 minutes
+
+async function makeHash(pw) {
+  // hash twice for extra strength: SHA256(SALT + SHA256(pw) + SALT)
+  const inner = await sha256(pw);
+  return sha256(SALT + inner + SALT);
+}
+
+/* ============================================================
+   USER STORE — always reads fresh from localStorage
+============================================================ */
+function loadUsers() {
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function persistUsers(arr) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(arr));
+}
+
+/* Bootstrap admin account on first load */
+async function bootstrapAdmin() {
+  if (loadUsers().length > 0) return; // already seeded
+  const hash = await makeHash('NDA@CML2026!');
+  persistUsers([{ username: 'Admin_Anthony', hash, role: 'Admin', created: Date.now() }]);
+}
+
+/* ============================================================
+   RATE LIMITING
+============================================================ */
+function getLock()    { try { return JSON.parse(localStorage.getItem(LOCK_KEY)) || { attempts:0, until:0 }; } catch(e) { return { attempts:0, until:0 }; } }
+function setLock(s)   { localStorage.setItem(LOCK_KEY, JSON.stringify(s)); }
+function clearLock()  { localStorage.removeItem(LOCK_KEY); }
+
+function lockRemaining() {
+  const s = getLock();
+  return (s.until && Date.now() < s.until) ? s.until : 0;
+}
+
+/* ============================================================
+   LOGIN
+============================================================ */
+async function doLogin() {
+  // Check lock first
+  const remaining = lockRemaining();
+  if (remaining) {
+    const secs = Math.ceil((remaining - Date.now()) / 1000);
+    showLoginMsg('lock', `🔒 Compte bloqué. Réessayez dans ${secs}s.`);
+    return;
+  }
+
+  const username = document.getElementById('inp-user').value.trim();
+  const password = document.getElementById('inp-pass').value;
+
+  if (!username || !password) {
+    showLoginMsg('error', 'Veuillez remplir tous les champs.');
+    return;
+  }
+
+  // Disable button while hashing
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.textContent = 'Vérification…';
+
+  try {
+    const inputHash = await makeHash(password);
+    const users     = loadUsers();
+    const user      = users.find(u => u.username === username && u.hash === inputHash);
+
+    if (user) {
+      // SUCCESS
+      clearLock();
+      updateAttemptsBar(0);
+      const token = await sha256(username + Date.now() + Math.random().toString());
+      const session = {
+        username: user.username,
+        role:     user.role,
+        token,
+        expires:  Date.now() + 8 * 3600 * 1000
+      };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      initApp(session);
+    } else {
+      // FAILURE
+      const lock = getLock();
+      lock.attempts = (lock.attempts || 0) + 1;
+      if (lock.attempts >= MAX_ATTEMPTS) {
+        lock.until = Date.now() + LOCK_MS;
+        setLock(lock);
+        updateAttemptsBar(5);
+        showLoginMsg('lock', '🔒 Trop de tentatives. Compte bloqué 5 minutes.');
+        // auto-unblock after timeout
+        setTimeout(() => {
+          clearLock();
+          updateAttemptsBar(0);
+          showLoginMsg('', '');
+          btn.disabled = false;
+          btn.textContent = 'Se connecter →';
+        }, LOCK_MS);
+      } else {
+        setLock(lock);
+        const rem = MAX_ATTEMPTS - lock.attempts;
+        updateAttemptsBar(lock.attempts);
+        showLoginMsg('error', `Identifiant ou mot de passe incorrect. (${rem} essai${rem>1?'s':''} restant${rem>1?'s':''})`);
+        btn.disabled = false;
+        btn.textContent = 'Se connecter →';
+      }
+    }
+  } catch(err) {
+    console.error('Login error:', err);
+    showLoginMsg('error', 'Erreur technique. Réessayez.');
+    btn.disabled = false;
+    btn.textContent = 'Se connecter →';
+  }
+}
+
+function showLoginMsg(type, msg) {
+  const errEl  = document.getElementById('login-error');
+  const lockEl = document.getElementById('login-lockout');
+  errEl.style.display  = 'none';
+  lockEl.style.display = 'none';
+  if (!msg) return;
+  if (type === 'error') { errEl.textContent = msg;  errEl.style.display  = 'block'; }
+  if (type === 'lock')  { lockEl.textContent = msg; lockEl.style.display = 'block'; document.getElementById('btn-login').disabled = true; }
+}
+
+function updateAttemptsBar(n) {
+  const fill = document.getElementById('attempts-fill');
+  if (fill) fill.style.width = ((n / MAX_ATTEMPTS) * 100) + '%';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const passEl = document.getElementById('inp-pass');
+  const userEl = document.getElementById('inp-user');
+  if (passEl) passEl.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  if (userEl) userEl.addEventListener('keydown', e => { if (e.key === 'Enter') passEl.focus(); });
+});
+
+function doLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+/* ============================================================
+   AUTO-LOGIN ON PAGE LOAD
+============================================================ */
+(async function autoLogin() {
+  await bootstrapAdmin();
+
+  const raw = sessionStorage.getItem(SESSION_KEY);
+  if (raw) {
+    try {
+      const sess = JSON.parse(raw);
+      if (sess.expires && Date.now() < sess.expires) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        initApp(sess);
+        return;
+      }
+    } catch(e) {}
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+
+  // Check if still locked
+  const rem = lockRemaining();
+  if (rem) {
+    const secs = Math.ceil((rem - Date.now()) / 1000);
+    showLoginMsg('lock', `🔒 Compte bloqué. Réessayez dans ${secs}s.`);
+    updateAttemptsBar(5);
+  }
+})();
+
+/* ============================================================
+   PASSWORD STRENGTH INDICATOR
+============================================================ */
+function checkStrength(pw) {
+  let score = 0;
+  if (pw.length >= 8)           score++;
+  if (pw.length >= 12)          score++;
+  if (/[A-Z]/.test(pw))         score++;
+  if (/[0-9]/.test(pw))         score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  const colors = ['#ef4444','#f97316','#f59e0b','#10b981','#10b981'];
+  const labels = ['Très faible','Faible','Moyen','Fort','Très fort'];
+  const fill   = document.getElementById('strength-fill');
+  const label  = document.getElementById('strength-label');
+  if (!fill || !label) return;
+  fill.style.width      = ((score / 5) * 100) + '%';
+  fill.style.background = score > 0 ? colors[score-1] : '#ef4444';
+  label.textContent     = pw.length ? (labels[Math.min(score,4)]) : '';
+}
+
+/* ============================================================
+   APP INIT
+============================================================ */
+let currentUser = null;
+
+function initApp(sess) {
+  currentUser = sess;
+  const av = (sess.username || '??').slice(0, 2).toUpperCase();
+  document.getElementById('sidebar-username').textContent = sess.username;
+  document.getElementById('sidebar-role').textContent = sess.role;
+  document.getElementById('sidebar-avatar').textContent = av;
+  const mobileAv = document.getElementById('mobile-avatar');
+  if (mobileAv) mobileAv.textContent = av;
+  document.getElementById('current-date').textContent = new Date().toLocaleDateString('fr-BE');
+  setTimeout(() => { initCharts(); renderUsers(); }, 200);
+}
+
+/* ============================================================
+   MOBILE SIDEBAR
+============================================================ */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+  document.getElementById('hamburger').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+const PAGE_TITLES = {
+  overview:    ['Tableau de bord',       'Vue générale — CML SA | Données au 28/02/2026'],
+  financials:  ['Compte de résultats',   'Exercice 2026 — Jan–Fév cumulé & projections'],
+  balance:     ['Bilan',                 'Au 28/02/2026 — Source : THG Bruxelles'],
+  projections: ['Projections 2026',      'Scénarios annuels — Extrapolation jan–fév 2026'],
+  febi:        ['Subsides FEBI',         'UCARE Services Wallonia — CP330'],
+  suppliers:   ['Fournisseurs',          'Postes ouverts au 19/03/2026'],
+  clients:     ['Clients & Créances',    'Balance agée au 13/03/2026'],
+  transfer:    ['Prix de transfert NDA', 'Risques SPF — Art. 185 CIR 92'],
+  risks:       ['Passifs & Risques',     'Passifs historiques et risques ouverts'],
+  actions:     ["Plan d'actions",        'Suivi des actions NDA-CML 2026'],
+  upload:      ['Documents & Imports',   'Gestion documentaire'],
+  users:       ['Utilisateurs',          'Gestion des accès'],
+};
+
+function navTo(id) {
+  closeSidebar();
+  showPage(id);
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'"))
+      n.classList.add('active');
+  });
+  const [title, sub] = PAGE_TITLES[id] || ['Dashboard', ''];
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-sub').textContent   = sub;
+  setTimeout(() => Object.values(charts).forEach(c => { try { c.resize(); } catch(e) {} }), 60);
+}
+
+/* ============================================================
+   ACTION ITEMS
+============================================================ */
+function toggleAction(el) {
+  el.classList.toggle('done');
+  el.querySelector('.action-checkbox').textContent = el.classList.contains('done') ? '✓' : '';
+}
+
+/* ============================================================
+   USER MANAGEMENT
+   FIX: addUser is now fully synchronous with async/await,
+        reads/writes from the same key, and validates properly
+============================================================ */
+function renderUsers() {
+  const users = loadUsers();
+  const countEl = document.getElementById('users-count');
+  if (countEl) countEl.textContent = users.length;
+  const listEl = document.getElementById('users-list');
+  if (!listEl) return;
+  listEl.innerHTML = users.map((u, i) => `
+    <div class="user-row">
+      <div class="user-row-avatar">${(u.username||'?').slice(0,2).toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="user-row-name">${u.username}</div>
+        <div class="user-row-email">Rôle : ${u.role} · Créé le ${u.created ? new Date(u.created).toLocaleDateString('fr-BE') : '—'}</div>
+      </div>
+      <span class="badge ${u.role==='Admin'?'red':u.role==='Editor'?'yellow':'blue'}" style="flex-shrink:0">${u.role}</span>
+      ${i > 0
+        ? `<button class="btn-sm danger" onclick="deleteUser(${i})">Supprimer</button>`
+        : `<div style="width:72px;flex-shrink:0"></div>`}
+    </div>
+  `).join('');
+}
+
+function openAddUser() {
+  ['new-username','new-password','new-password2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const roleEl = document.getElementById('new-role');
+  if (roleEl) roleEl.value = 'Viewer';
+  const errEl = document.getElementById('add-user-error');
+  if (errEl) errEl.style.display = 'none';
+  const fill  = document.getElementById('strength-fill');
+  const label = document.getElementById('strength-label');
+  if (fill)  fill.style.width = '0%';
+  if (label) label.textContent = '';
+  document.getElementById('modal-adduser').classList.add('open');
+}
+
+function closeAddUser() {
+  document.getElementById('modal-adduser').classList.remove('open');
+}
+
+async function addUser() {
+  const usernameEl  = document.getElementById('new-username');
+  const passwordEl  = document.getElementById('new-password');
+  const password2El = document.getElementById('new-password2');
+  const roleEl      = document.getElementById('new-role');
+  const errEl       = document.getElementById('add-user-error');
+  const submitBtn   = document.querySelector('#modal-adduser .btn-primary');
+
+  const username  = usernameEl.value.trim();
+  const password  = passwordEl.value;
+  const password2 = password2El.value;
+  const role      = roleEl.value;
+
+  const showErr = (msg) => {
+    errEl.textContent    = msg;
+    errEl.style.display  = 'block';
+  };
+
+  // --- Validations ---
+  if (!username)          { showErr('L\'identifiant est obligatoire.'); return; }
+  if (username.length < 3){ showErr('Identifiant trop court (min. 3 caractères).'); return; }
+  if (/\s/.test(username)){ showErr('L\'identifiant ne peut pas contenir d\'espaces.'); return; }
+  if (!password)          { showErr('Le mot de passe est obligatoire.'); return; }
+  if (password.length < 8){ showErr('Mot de passe trop court (minimum 8 caractères).'); return; }
+  if (password !== password2){ showErr('Les mots de passe ne correspondent pas.'); return; }
+
+  // Strength check
+  let strength = 0;
+  if (/[A-Z]/.test(password))         strength++;
+  if (/[0-9]/.test(password))         strength++;
+  if (/[^A-Za-z0-9]/.test(password)) strength++;
+  if (strength < 1) { showErr('Mot de passe trop faible — ajoutez une majuscule ou un chiffre.'); return; }
+
+  // Duplicate check
+  const users = loadUsers();
+  if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+    showErr('Cet identifiant existe déjà. Choisissez-en un autre.');
+    return;
+  }
+
+  // Disable button during hashing
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Création…'; }
+
+  try {
+    const hash = await makeHash(password);   // same function as login
+    users.push({ username, hash, role, created: Date.now() });
+    persistUsers(users);                      // save immediately
+    closeAddUser();
+    renderUsers();
+    if (errEl) errEl.style.display = 'none';
+  } catch(err) {
+    console.error('addUser error:', err);
+    showErr('Erreur technique lors de la création. Réessayez.');
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Créer l\'utilisateur'; }
+  }
+}
+
+function deleteUser(i) {
+  if (!confirm('Supprimer définitivement cet utilisateur ?')) return;
+  const users = loadUsers();
+  users.splice(i, 1);
+  persistUsers(users);
+  renderUsers();
+}
+
+/* ============================================================
+   FILE UPLOAD
+============================================================ */
+function handleFileSelect(e) { [...e.target.files].forEach(addFileToList); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  [...e.dataTransfer.files].forEach(addFileToList);
+}
+function addFileToList(file) {
+  const div = document.createElement('div');
+  div.className = 'uploaded-file';
+  const kb   = (file.size / 1024).toFixed(0);
+  const icon = file.name.endsWith('.pdf') ? '📄' : file.name.match(/\.xlsx?|\.csv/) ? '📊' : '📝';
+  div.innerHTML = `<div class="file-icon">${icon}</div><div class="file-name">${file.name}</div><div class="file-size">${kb} KB</div><span class="badge green">Chargé</span>`;
+  document.getElementById('uploaded-files').appendChild(div);
+}
+
+/* ============================================================
+   CHARTS
+============================================================ */
+Chart.defaults.color        = '#94a3b8';
+Chart.defaults.borderColor  = '#2a3450';
+Chart.defaults.font.family  = 'Inter';
+
+const C = {
+  blue:'#3b82f6', indigo:'#6366f1', green:'#10b981',
+  yellow:'#f59e0b', red:'#ef4444', orange:'#f97316',
+  teal:'#14b8a6', purple:'#a855f7'
+};
+function rgba(c, a = 1) {
+  const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+let charts = {};
+
+function safeChart(id, config) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  if (charts[id]) { try { charts[id].destroy(); } catch(e) {} }
+  charts[id] = new Chart(el, config);
+  return charts[id];
+}
+
+function initCharts() {
+  safeChart('chartMutual',{type:'doughnut',data:{labels:['Mut. Chrétiennes','Mut. Socialiste','Mut. Libres','Vlaams Neutraal','Autres'],datasets:[{data:[187097,145577,81440,36463,53508],backgroundColor:[C.blue,C.green,C.indigo,C.yellow,C.teal],borderWidth:2,borderColor:'#1a2035',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}}});
+
+  safeChart('chartCharges',{type:'bar',data:{labels:['Rémunérations','Intérim','Hon. NDA','Autres serv.','Autres'],datasets:[{label:'Annualisé (€)',data:[1553730,612048,435600,389034,26802],backgroundColor:[C.blue,C.indigo,C.red,C.teal,C.yellow],borderRadius:5,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:rgba('#2a3450',0.5)}},y:{grid:{display:false}}}}});
+
+  safeChart('chartMonthly',{type:'bar',data:{labels:['Janvier 2026','Février 2026'],datasets:[{label:'Total produits',data:[308780,599357],backgroundColor:rgba(C.blue,0.8),borderRadius:5},{label:'Total charges',data:[183159,502887],backgroundColor:rgba(C.red,0.6),borderRadius:5},{label:'Résultat net',data:[125612,96470],type:'line',borderColor:C.green,backgroundColor:rgba(C.green,0.1),pointBackgroundColor:C.green,fill:false,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10,font:{size:11}}}},scales:{y:{grid:{color:rgba('#2a3450',0.5)}},x:{grid:{display:false}}}}});
+
+  safeChart('chartBalance',{type:'bar',data:{labels:['Immobilisés','Créances','Autres créances','Trésorerie','FEBI acquis'],datasets:[{label:'Actif',data:[74405,276963,53134,25757,92591],backgroundColor:rgba(C.blue,0.8),borderRadius:5,borderWidth:0},{label:'Passif',data:[0,141967,182933,208995,0],backgroundColor:rgba(C.red,0.6),borderRadius:5,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10,font:{size:11}}}},scales:{y:{grid:{color:rgba('#2a3450',0.5)}},x:{grid:{display:false}}}}});
+
+  safeChart('chartScenarios',{type:'bar',data:{labels:['Pessimiste','Base','Optimiste','FEBI 100%'],datasets:[{label:'CA Total',data:[3686316,3577662,4030338,3762046],backgroundColor:rgba(C.blue,0.7),borderRadius:5},{label:'Résultat net',data:[651316,557662,930338,742046],backgroundColor:rgba(C.green,0.9),borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10,font:{size:11}}}},scales:{y:{grid:{color:rgba('#2a3450',0.5)}},x:{grid:{display:false}}}}});
+
+  safeChart('chartBonus',{type:'bar',data:{labels:['CA INAMI seul','CA + FEBI inclus','Seuil bonus NDA'],datasets:[{data:[3024510,3595662,3000000],backgroundColor:[rgba(C.blue,0.7),rgba(C.green,0.8),rgba(C.yellow,0.6)],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:rgba('#2a3450',0.5)}},y:{grid:{display:false}}}}});
+
+  safeChart('chartFebi',{type:'doughnut',data:{labels:['Utilisé (75%)','Potentiel inexploité (25%)'],datasets:[{data:[553152,184384],backgroundColor:[C.green,rgba(C.yellow,0.35)],borderWidth:2,borderColor:'#1a2035',hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'63%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});
+
+  safeChart('chartRisk',{type:'radar',data:{labels:['Axe 1\nRéalité','Axe 2\nPrix','Axe 3\nDistrib.','Axe 4\nDoc.','Axe 5\nAbus'],datasets:[{label:'Actuel (3,6M CA)',data:[70,55,50,80,59],borderColor:C.red,backgroundColor:rgba(C.red,0.12),borderWidth:2,pointBackgroundColor:C.red},{label:'Seuil 5,2M CA',data:[70,39,41,80,53],borderColor:C.yellow,backgroundColor:rgba(C.yellow,0.08),borderWidth:2,pointBackgroundColor:C.yellow}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:9}},grid:{color:rgba('#2a3450',0.8)},angleLines:{color:rgba('#2a3450',0.8)},pointLabels:{font:{size:9}}}},plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}}}});
+
+  safeChart('chartClients',{type:'bar',data:{labels:['Epicura','Mutualités','IMS Labo','RCAM EU','Ariane ASBL'],datasets:[{data:[19407,17869,4888,4815,2925],backgroundColor:[rgba(C.yellow,0.8),rgba(C.green,0.8),rgba(C.orange,0.8),rgba(C.blue,0.8),rgba(C.red,0.8)],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:rgba('#2a3450',0.5)}},x:{grid:{display:false}}}}});
+
+  safeChart('chartPassif',{type:'doughnut',data:{labels:['UNILEX (est.)','Impôts 2022-23','Précomptes','ONSS','Avance PNS','Dettes Roger','C/C Roger'],datasets:[{data:[40000,49034,37069,34994,140175,64220,54127],backgroundColor:[C.red,C.orange,C.yellow,C.teal,C.indigo,C.purple,C.blue],borderWidth:2,borderColor:'#1a2035',hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{boxWidth:8,font:{size:9}}}}}});
+}
+</script>
+</body>
+</html>
